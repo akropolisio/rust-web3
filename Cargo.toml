@@ -2,8 +2,8 @@
 name = "web3"
 version = "0.5.1"
 description = "Ethereum JSON-RPC client."
-homepage = "https://github.com/tomusdrw/rust-web3"
-repository = "https://github.com/tomusdrw/rust-web3"
+homepage = "https://github.com/akropolisio/rust-web3"
+repository = "https://github.com/akropolisio/rust-web3"
 documentation = "https://docs.rs/web3"
 license = "MIT"
 keywords = ["jsonrpc", "web3", "ethereum", "rpc", "client"]
@@ -34,6 +34,7 @@ tokio-core = { version = "0.1", optional = true }
 tokio-io = { version = "0.1", optional = true }
 tokio-uds = { version = "0.1", optional = true }
 websocket = { version = "0.21", optional = true }
+hyper_http = { version = "0.1.14", package = "http" }
 
 [dev-dependencies]
 # For examples
@@ -47,5 +48,3 @@ http = ["hyper", "tokio-core"]
 ipc = ["tokio-uds", "tokio-core", "tokio-io"]
 ws = ["tokio-core", "websocket"]
 tls = ["hyper-tls", "native-tls"]
-
-[workspace]
