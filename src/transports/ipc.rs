@@ -17,24 +17,26 @@ use futures::{self, Future, Stream};
 use helpers;
 use parking_lot::Mutex;
 use rpc;
-use transports::Result;
 use transports::shared::{EventLoopHandle, Response};
 use transports::tokio_core::reactor;
-use transports::tokio_io::AsyncRead;
 use transports::tokio_io::io::{ReadHalf, WriteHalf};
+use transports::tokio_io::AsyncRead;
+use transports::Result;
 use {BatchTransport, DuplexTransport, Error, ErrorKind, RequestId, Transport};
 
 macro_rules! try_nb {
-  ($e:expr) => (match $e {
-    Ok(t) => t,
-    Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
-      return Ok(futures::Async::NotReady)
-    }
-    Err(e) => {
-      warn!("Unexpected IO error: {:?}", e);
-      return Err(())
-    },
-  })
+    ($e:expr) => {
+        match $e {
+            Ok(t) => t,
+            Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
+                return Ok(futures::Async::NotReady)
+            }
+            Err(e) => {
+                warn!("Unexpected IO error: {:?}", e);
+                return Err(());
+            }
+        }
+    };
 }
 
 type Pending = oneshot::Sender<Result<Vec<Result<rpc::Value>>>>;
@@ -63,7 +65,9 @@ impl Ipc {
         P: AsRef<Path>,
     {
         let path = path.as_ref().to_owned();
-        EventLoopHandle::spawn(move |handle| Self::with_event_loop(&path, &handle).map_err(Into::into))
+        EventLoopHandle::spawn(move |handle| {
+            Self::with_event_loop(&path, &handle).map_err(Into::into)
+        })
     }
 
     /// Create new IPC transport within existing Event Loop.
@@ -126,7 +130,8 @@ impl Ipc {
         let (tx, rx) = futures::oneshot();
         self.pending.lock().insert(id, tx);
 
-        let result = self.write_sender
+        let result = self
+            .write_sender
             .unbounded_send(request.into_bytes())
             .map_err(|_| ErrorKind::Io(io::ErrorKind::BrokenPipe.into()).into());
 
@@ -164,7 +169,8 @@ impl BatchTransport for Ipc {
         T: IntoIterator<Item = (RequestId, rpc::Call)>,
     {
         let mut it = requests.into_iter();
-        let (id, first) = it.next()
+        let (id, first) = it
+            .next()
             .map(|x| (x.0, Some(x.1)))
             .unwrap_or_else(|| (0, None));
         let requests = first.into_iter().chain(it.map(|x| x.1)).collect();
@@ -281,7 +287,9 @@ impl Future for ReadStream {
 
             let mut min = self.current_pos;
             self.current_pos += read;
-            while let Some((response, len)) = Self::extract_response(&self.buffer[0..self.current_pos], min) {
+            while let Some((response, len)) =
+                Self::extract_response(&self.buffer[0..self.current_pos], min)
+            {
                 // Respond
                 self.respond(response);
 
@@ -360,7 +368,9 @@ impl ReadStream {
                 // Try to deserialize
                 let pos = pos + 1;
                 match helpers::to_response_from_slice(&buf[0..pos]) {
-                    Ok(rpc::Response::Single(output)) => return Some((Message::Rpc(vec![output]), pos)),
+                    Ok(rpc::Response::Single(output)) => {
+                        return Some((Message::Rpc(vec![output]), pos))
+                    }
                     Ok(rpc::Response::Batch(outputs)) => return Some((Message::Rpc(outputs), pos)),
                     // just continue
                     _ => {}
@@ -381,10 +391,10 @@ mod tests {
     extern crate tokio_core;
     extern crate tokio_uds;
 
-    use std::io::{self, Read, Write};
     use super::Ipc;
     use futures::{self, Future};
     use rpc;
+    use std::io::{self, Read, Write};
     use Transport;
 
     #[test]
@@ -453,10 +463,7 @@ mod tests {
                     // Read request
                     let read = try_nb!(self.server.read(&mut data));
                     let request = String::from_utf8(data[0..read].to_vec()).unwrap();
-                    assert_eq!(
-                        &request,
-                        r#"{"jsonrpc":"2.0","method":"eth_accounts","params":["1"],"id":1}{"jsonrpc":"2.0","method":"eth_accounts","params":["1"],"id":2}"#
-                    );
+                    assert_eq!(&request, r#"{"jsonrpc":"2.0","method":"eth_accounts","params":["1"],"id":1}{"jsonrpc":"2.0","method":"eth_accounts","params":["1"],"id":2}"#);
 
                     // Write response
                     let response = r#"{"jsonrpc":"2.0","id":1,"result":"x"}{"jsonrpc":"2.0","id":2,"result":"x"}"#;

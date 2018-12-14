@@ -13,7 +13,8 @@ fn main() {
             "http://localhost:8545",
             &event_loop.handle(),
             MAX_PARALLEL_REQUESTS,
-        ).unwrap(),
+        )
+        .unwrap(),
     );
     let accounts = web3.eth().accounts().map(|accounts| {
         println!("Accounts: {:?}", accounts);

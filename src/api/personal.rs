@@ -2,7 +2,7 @@
 
 use api::Namespace;
 use helpers::{self, CallFuture};
-use types::{Address, H256, TransactionRequest};
+use types::{Address, TransactionRequest, H256};
 
 use Transport;
 
@@ -43,7 +43,12 @@ impl<T: Transport> Personal<T> {
 
     /// Unlocks the account with given password for some period of time (or single transaction).
     /// Returns `true` if the call was successful.
-    pub fn unlock_account(&self, address: Address, password: &str, duration: Option<u16>) -> CallFuture<bool, T::Out> {
+    pub fn unlock_account(
+        &self,
+        address: Address,
+        password: &str,
+        duration: Option<u16>,
+    ) -> CallFuture<bool, T::Out> {
         let address = helpers::serialize(&address);
         let password = helpers::serialize(&password);
         let duration = helpers::serialize(&duration);
@@ -55,7 +60,11 @@ impl<T: Transport> Personal<T> {
 
     /// Sends a transaction from locked account.
     /// Returns transaction hash.
-    pub fn send_transaction(&self, transaction: TransactionRequest, password: &str) -> CallFuture<H256, T::Out> {
+    pub fn send_transaction(
+        &self,
+        transaction: TransactionRequest,
+        password: &str,
+    ) -> CallFuture<H256, T::Out> {
         let transaction = helpers::serialize(&transaction);
         let password = helpers::serialize(&password);
         CallFuture::new(

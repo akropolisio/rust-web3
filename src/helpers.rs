@@ -2,8 +2,8 @@
 
 use std::marker::PhantomData;
 
-use rpc;
 use futures::{Async, Future, Poll};
+use rpc;
 use serde;
 use serde_json;
 use {Error, ErrorKind};
@@ -67,16 +67,20 @@ pub fn build_request(id: usize, method: &str, params: Vec<rpc::Value>) -> rpc::C
 
 /// Parse bytes slice into JSON-RPC response.
 pub fn to_response_from_slice(response: &[u8]) -> Result<rpc::Response, Error> {
-    serde_json::from_slice(response).map_err(|e| ErrorKind::InvalidResponse(format!("{:?}", e)).into())
+    serde_json::from_slice(response)
+        .map_err(|e| ErrorKind::InvalidResponse(format!("{:?}", e)).into())
 }
 
 /// Parse bytes slice into JSON-RPC notification.
 pub fn to_notification_from_slice(notification: &[u8]) -> Result<rpc::Notification, Error> {
-    serde_json::from_slice(notification).map_err(|e| ErrorKind::InvalidResponse(format!("{:?}", e)).into())
+    serde_json::from_slice(notification)
+        .map_err(|e| ErrorKind::InvalidResponse(format!("{:?}", e)).into())
 }
 
 /// Parse a Vec of `rpc::Output` into `Result`.
-pub fn to_results_from_outputs(outputs: Vec<rpc::Output>) -> Result<Vec<Result<rpc::Value, Error>>, Error> {
+pub fn to_results_from_outputs(
+    outputs: Vec<rpc::Output>,
+) -> Result<Vec<Result<rpc::Value, Error>>, Error> {
     Ok(outputs.into_iter().map(to_result_from_output).collect())
 }
 
@@ -91,12 +95,12 @@ pub fn to_result_from_output(output: rpc::Output) -> Result<rpc::Value, Error> {
 #[macro_use]
 #[cfg(test)]
 pub mod tests {
+    use futures;
+    use rpc;
     use serde_json;
     use std::cell::RefCell;
     use std::collections::VecDeque;
     use std::rc::Rc;
-    use futures;
-    use rpc;
     use {ErrorKind, RequestId, Result, Transport};
 
     #[derive(Debug, Default, Clone)]
@@ -139,13 +143,15 @@ pub mod tests {
             let idx = self.asserted;
             self.asserted += 1;
 
-            let (m, p) = self.requests
+            let (m, p) = self
+                .requests
                 .borrow()
                 .get(idx)
                 .expect("Expected result.")
                 .clone();
             assert_eq!(&m, method);
-            let p: Vec<String> = p.into_iter()
+            let p: Vec<String> = p
+                .into_iter()
                 .map(|p| serde_json::to_string(&p).unwrap())
                 .collect();
             assert_eq!(p, params);

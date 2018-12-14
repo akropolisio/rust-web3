@@ -128,7 +128,7 @@ mod tests {
             SyncState::Syncing(SyncInfo {
                 starting_block: 0x0.into(),
                 current_block: 0x42.into(),
-                highest_block: 0x9001.into(),
+                highest_block: 0x9001.into()
             })
         );
     }
@@ -153,7 +153,7 @@ mod tests {
             SyncState::Syncing(SyncInfo {
                 starting_block: 0x0.into(),
                 current_block: 0x42.into(),
-                highest_block: 0x9001.into(),
+                highest_block: 0x9001.into()
             })
         );
     }

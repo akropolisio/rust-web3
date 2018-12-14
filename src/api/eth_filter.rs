@@ -1,15 +1,15 @@
 //! `Eth` namespace, filters.
 
+use futures::{Future, Poll, Stream};
+use serde::de::DeserializeOwned;
 use std::marker::PhantomData;
 use std::time::Duration;
 use std::vec;
-use serde::de::DeserializeOwned;
 use tokio_timer::{Interval, Timer};
-use futures::{Future, Poll, Stream};
 
 use api::Namespace;
 use helpers::{self, CallFuture};
-use types::{Filter, H256, Log};
+use types::{Filter, Log, H256};
 use {rpc, Error, ErrorKind, Transport};
 
 /// Stream of events
@@ -50,11 +50,10 @@ impl<T: Transport, I: DeserializeOwned> Stream for FilterStream<T, I> {
         loop {
             let next_state = match self.state {
                 FilterStreamState::WaitForInterval => {
-                    let _ready = try_ready!(
-                        self.interval
-                            .poll()
-                            .map_err(|_| Error::from(ErrorKind::Unreachable))
-                    );
+                    let _ready = try_ready!(self
+                        .interval
+                        .poll()
+                        .map_err(|_| Error::from(ErrorKind::Unreachable)));
                     let id = helpers::serialize(&self.base.id);
                     let future = CallFuture::new(
                         self.base
@@ -174,7 +173,10 @@ impl<T: Transport> BaseFilter<T, Log> {
 }
 
 /// Should be used to create new filter future
-fn create_filter<T: Transport, F: FilterInterface>(t: T, arg: Vec<rpc::Value>) -> CreateFilter<T, F::Item> {
+fn create_filter<T: Transport, F: FilterInterface>(
+    t: T,
+    arg: Vec<rpc::Value>,
+) -> CreateFilter<T, F::Item> {
     let future = CallFuture::new(t.execute(F::constructor(), arg));
     CreateFilter {
         transport: Some(t),
@@ -202,7 +204,8 @@ where
         let id = try_ready!(self.future.poll());
         let result = BaseFilter {
             id,
-            transport: self.transport
+            transport: self
+                .transport
                 .take()
                 .expect("future polled after ready; qed"),
             item: PhantomData,
@@ -250,10 +253,10 @@ impl<T: Transport> EthFilter<T> {
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
     use futures::{Future, Stream};
-    use serde_json;
     use rpc::Value;
+    use serde_json;
+    use std::time::Duration;
 
     use api::Namespace;
     use helpers::tests::TestTransport;
@@ -314,12 +317,7 @@ mod tests {
 
         // then
         assert_eq!(result, Ok(vec![log]));
-        transport.assert_request(
-            "eth_newFilter",
-            &[
-                r#"{"topics":[null,"0x0000000000000000000000000000000000000000000000000000000000000002"]}"#.into(),
-            ],
-        );
+        transport.assert_request("eth_newFilter", &[r#"{"topics":[null,"0x0000000000000000000000000000000000000000000000000000000000000002"]}"#.into()]);
         transport.assert_request("eth_getFilterLogs", &[r#""0x123""#.into()]);
         transport.assert_no_more_requests();
     }
@@ -358,9 +356,7 @@ mod tests {
         assert_eq!(result, Ok(Some(vec![log])));
         transport.assert_request(
             "eth_newFilter",
-            &[
-                r#"{"address":"0x0000000000000000000000000000000000000002"}"#.into(),
-            ],
+            &[r#"{"address":"0x0000000000000000000000000000000000000002"}"#.into()],
         );
         transport.assert_request("eth_getFilterChanges", &[r#""0x123""#.into()]);
         transport.assert_no_more_requests();
@@ -389,9 +385,9 @@ mod tests {
         // given
         let mut transport = TestTransport::default();
         transport.set_response(Value::String("0x123".into()));
-        transport.add_response(Value::Array(vec![
-            Value::String(r#"0x0000000000000000000000000000000000000000000000000000000000000456"#.into()),
-        ]));
+        transport.add_response(Value::Array(vec![Value::String(
+            r#"0x0000000000000000000000000000000000000000000000000000000000000456"#.into(),
+        )]));
         let result = {
             let eth = EthFilter::new(&transport);
 
@@ -413,16 +409,20 @@ mod tests {
         // given
         let mut transport = TestTransport::default();
         transport.set_response(Value::String("0x123".into()));
+        transport.add_response(Value::Array(vec![Value::String(
+            r#"0x0000000000000000000000000000000000000000000000000000000000000456"#.into(),
+        )]));
         transport.add_response(Value::Array(vec![
-            Value::String(r#"0x0000000000000000000000000000000000000000000000000000000000000456"#.into()),
+            Value::String(
+                r#"0x0000000000000000000000000000000000000000000000000000000000000457"#.into(),
+            ),
+            Value::String(
+                r#"0x0000000000000000000000000000000000000000000000000000000000000458"#.into(),
+            ),
         ]));
-        transport.add_response(Value::Array(vec![
-            Value::String(r#"0x0000000000000000000000000000000000000000000000000000000000000457"#.into()),
-            Value::String(r#"0x0000000000000000000000000000000000000000000000000000000000000458"#.into()),
-        ]));
-        transport.add_response(Value::Array(vec![
-            Value::String(r#"0x0000000000000000000000000000000000000000000000000000000000000459"#.into()),
-        ]));
+        transport.add_response(Value::Array(vec![Value::String(
+            r#"0x0000000000000000000000000000000000000000000000000000000000000459"#.into(),
+        )]));
         let result = {
             let eth = EthFilter::new(&transport);
 
@@ -469,9 +469,9 @@ mod tests {
         // given
         let mut transport = TestTransport::default();
         transport.set_response(Value::String("0x123".into()));
-        transport.add_response(Value::Array(vec![
-            Value::String(r#"0x0000000000000000000000000000000000000000000000000000000000000456"#.into()),
-        ]));
+        transport.add_response(Value::Array(vec![Value::String(
+            r#"0x0000000000000000000000000000000000000000000000000000000000000456"#.into(),
+        )]));
         let result = {
             let eth = EthFilter::new(&transport);
 

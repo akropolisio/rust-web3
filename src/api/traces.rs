@@ -1,6 +1,8 @@
 use api::Namespace;
 use helpers::{self, CallFuture};
-use types::{TraceType, BlockTrace, Trace, TraceFilter, CallRequest, BlockNumber, Bytes, H256, Index};
+use types::{
+    BlockNumber, BlockTrace, Bytes, CallRequest, Index, Trace, TraceFilter, TraceType, H256,
+};
 use Transport;
 
 /// `Trace` namespace
@@ -23,32 +25,61 @@ impl<T: Transport> Namespace<T> for Traces<T> {
 }
 impl<T: Transport> Traces<T> {
     /// Executes the given call and returns a number of possible traces for it
-    pub fn call(&self, req: CallRequest, trace_type: Vec<TraceType>, block: Option<BlockNumber>) -> CallFuture<BlockTrace, T::Out> {
+    pub fn call(
+        &self,
+        req: CallRequest,
+        trace_type: Vec<TraceType>,
+        block: Option<BlockNumber>,
+    ) -> CallFuture<BlockTrace, T::Out> {
         let req = helpers::serialize(&req);
         let block = helpers::serialize(&block.unwrap_or(BlockNumber::Latest));
         let trace_type = helpers::serialize(&trace_type);
-        CallFuture::new(self.transport.execute("trace_call", vec![req, trace_type, block]))
+        CallFuture::new(
+            self.transport
+                .execute("trace_call", vec![req, trace_type, block]),
+        )
     }
 
     /// Traces a call to `eth_sendRawTransaction` without making the call, returning the traces
-    pub fn raw_transaction(&self, data: Bytes, trace_type: Vec<TraceType>) -> CallFuture<BlockTrace, T::Out> {
+    pub fn raw_transaction(
+        &self,
+        data: Bytes,
+        trace_type: Vec<TraceType>,
+    ) -> CallFuture<BlockTrace, T::Out> {
         let data = helpers::serialize(&data);
         let trace_type = helpers::serialize(&trace_type);
-        CallFuture::new(self.transport.execute("trace_rawTransaction", vec![data, trace_type]))
+        CallFuture::new(
+            self.transport
+                .execute("trace_rawTransaction", vec![data, trace_type]),
+        )
     }
 
     /// Replays a transaction, returning the traces
-    pub fn replay_transaction(&self, hash: H256, trace_type: Vec<TraceType>) -> CallFuture<BlockTrace, T::Out> {
+    pub fn replay_transaction(
+        &self,
+        hash: H256,
+        trace_type: Vec<TraceType>,
+    ) -> CallFuture<BlockTrace, T::Out> {
         let hash = helpers::serialize(&hash);
         let trace_type = helpers::serialize(&trace_type);
-        CallFuture::new(self.transport.execute("trace_replayTransaction", vec![hash, trace_type]))
+        CallFuture::new(
+            self.transport
+                .execute("trace_replayTransaction", vec![hash, trace_type]),
+        )
     }
 
     /// Replays all transactions in a block returning the requested traces for each transaction
-    pub fn replay_block_transactions(&self, block: BlockNumber, trace_type: Vec<TraceType>) -> CallFuture<BlockTrace, T::Out> {
+    pub fn replay_block_transactions(
+        &self,
+        block: BlockNumber,
+        trace_type: Vec<TraceType>,
+    ) -> CallFuture<BlockTrace, T::Out> {
         let block = helpers::serialize(&block);
         let trace_type = helpers::serialize(&trace_type);
-        CallFuture::new(self.transport.execute("trace_replayBlockTransaction", vec![block, trace_type]))
+        CallFuture::new(
+            self.transport
+                .execute("trace_replayBlockTransaction", vec![block, trace_type]),
+        )
     }
 
     /// Returns traces created at given block
@@ -80,11 +111,13 @@ impl<T: Transport> Traces<T> {
 }
 
 #[cfg(test)]
-mod tests  {
+mod tests {
     use futures::Future;
 
     use api::Namespace;
-    use types::{TraceType, BlockNumber, BlockTrace, Trace, TraceFilterBuilder, Bytes, CallRequest, H256};
+    use types::{
+        BlockNumber, BlockTrace, Bytes, CallRequest, Trace, TraceFilterBuilder, TraceType, H256,
+    };
 
     use super::Traces;
 

@@ -1,4 +1,4 @@
-use types::{Bytes, H160, H256, Index, Log, U256, U64};
+use types::{Bytes, Index, Log, H160, H256, U256, U64};
 
 /// Description of a Transaction, pending or in the chain.
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
@@ -63,8 +63,8 @@ pub struct Receipt {
 
 #[cfg(test)]
 mod tests {
-    use serde_json;
     use super::Receipt;
+    use serde_json;
 
     #[test]
     fn test_deserialize_receipt() {

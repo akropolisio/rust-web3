@@ -2,7 +2,11 @@
 
 use api::Namespace;
 use helpers::{self, CallFuture};
-use types::{Address, Block, BlockId, BlockNumber, Bytes, CallRequest, H256, H520, H64, Index, SyncState, Transaction, TransactionId, TransactionReceipt, TransactionRequest, U256, Work, Filter, Log};
+use types::{
+    Address, Block, BlockId, BlockNumber, Bytes, CallRequest, Filter, Index, Log, SyncState,
+    Transaction, TransactionId, TransactionReceipt, TransactionRequest, Work, H256, H520, H64,
+    U256,
+};
 use Transport;
 
 /// `Eth` namespace
@@ -67,7 +71,11 @@ impl<T: Transport> Eth<T> {
     }
 
     /// Call a contract without changing the state of the blockchain to estimate gas usage.
-    pub fn estimate_gas(&self, req: CallRequest, block: Option<BlockNumber>) -> CallFuture<U256, T::Out> {
+    pub fn estimate_gas(
+        &self,
+        req: CallRequest,
+        block: Option<BlockNumber>,
+    ) -> CallFuture<U256, T::Out> {
         let req = helpers::serialize(&req);
         let block = helpers::serialize(&block.unwrap_or(BlockNumber::Latest));
 
@@ -80,7 +88,11 @@ impl<T: Transport> Eth<T> {
     }
 
     /// Get balance of given address
-    pub fn balance(&self, address: Address, block: Option<BlockNumber>) -> CallFuture<U256, T::Out> {
+    pub fn balance(
+        &self,
+        address: Address,
+        block: Option<BlockNumber>,
+    ) -> CallFuture<U256, T::Out> {
         let address = helpers::serialize(&address);
         let block = helpers::serialize(&block.unwrap_or(BlockNumber::Latest));
 
@@ -91,9 +103,9 @@ impl<T: Transport> Eth<T> {
     }
 
     /// Get all logs matching a given filter object
-    pub fn logs(&self, filter: Filter) -> CallFuture<Vec<Log>,T::Out> {
+    pub fn logs(&self, filter: Filter) -> CallFuture<Vec<Log>, T::Out> {
         let filter = helpers::serialize(&filter);
-        CallFuture::new(self.transport.execute("eth_getLogs",vec![filter]))
+        CallFuture::new(self.transport.execute("eth_getLogs", vec![filter]))
     }
 
     /// Get block details with transaction hashes.
@@ -168,7 +180,12 @@ impl<T: Transport> Eth<T> {
     }
 
     /// Get storage entry
-    pub fn storage(&self, address: Address, idx: U256, block: Option<BlockNumber>) -> CallFuture<H256, T::Out> {
+    pub fn storage(
+        &self,
+        address: Address,
+        idx: U256,
+        block: Option<BlockNumber>,
+    ) -> CallFuture<H256, T::Out> {
         let address = helpers::serialize(&address);
         let idx = helpers::serialize(&idx);
         let block = helpers::serialize(&block.unwrap_or(BlockNumber::Latest));
@@ -180,7 +197,11 @@ impl<T: Transport> Eth<T> {
     }
 
     /// Get nonce
-    pub fn transaction_count(&self, address: Address, block: Option<BlockNumber>) -> CallFuture<U256, T::Out> {
+    pub fn transaction_count(
+        &self,
+        address: Address,
+        block: Option<BlockNumber>,
+    ) -> CallFuture<U256, T::Out> {
         let address = helpers::serialize(&address);
         let block = helpers::serialize(&block.unwrap_or(BlockNumber::Latest));
 
@@ -216,7 +237,10 @@ impl<T: Transport> Eth<T> {
     }
 
     /// Get transaction receipt
-    pub fn transaction_receipt(&self, hash: H256) -> CallFuture<Option<TransactionReceipt>, T::Out> {
+    pub fn transaction_receipt(
+        &self,
+        hash: H256,
+    ) -> CallFuture<Option<TransactionReceipt>, T::Out> {
         let hash = helpers::serialize(&hash);
 
         CallFuture::new(
@@ -323,7 +347,12 @@ impl<T: Transport> Eth<T> {
     }
 
     /// Submit work of external miner
-    pub fn submit_work(&self, nonce: H64, pow_hash: H256, mix_hash: H256) -> CallFuture<bool, T::Out> {
+    pub fn submit_work(
+        &self,
+        nonce: H64,
+        pow_hash: H256,
+        mix_hash: H256,
+    ) -> CallFuture<bool, T::Out> {
         let nonce = helpers::serialize(&nonce);
         let pow_hash = helpers::serialize(&pow_hash);
         let mix_hash = helpers::serialize(&mix_hash);
@@ -344,8 +373,11 @@ mod tests {
     use futures::Future;
 
     use api::Namespace;
-    use types::{Block, BlockId, BlockNumber, Bytes, CallRequest, H256, SyncInfo, SyncState, Transaction, TransactionId, TransactionReceipt, TransactionRequest, Work, FilterBuilder, Log};
     use rpc::Value;
+    use types::{
+        Block, BlockId, BlockNumber, Bytes, CallRequest, FilterBuilder, Log, SyncInfo, SyncState,
+        Transaction, TransactionId, TransactionReceipt, TransactionRequest, Work, H256,
+    };
 
     use super::Eth;
 
@@ -377,7 +409,7 @@ mod tests {
   }"#;
 
     // taken from RPC docs, but with leading `00` added to `blockHash`
-    // and `transactionHash` fields because RPC docs currently show 
+    // and `transactionHash` fields because RPC docs currently show
     // 31-byte values in both positions (must be 32 bytes).
     const EXAMPLE_LOG: &'static str = r#"{
     "logIndex": "0x1",

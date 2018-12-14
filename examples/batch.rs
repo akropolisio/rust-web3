@@ -13,7 +13,8 @@ fn main() {
         "http://localhost:8545",
         &event_loop.handle(),
         MAX_PARALLEL_REQUESTS,
-    ).unwrap();
+    )
+    .unwrap();
 
     let web3 = web3::Web3::new(web3::transports::Batch::new(http));
     let _ = web3.eth().accounts();

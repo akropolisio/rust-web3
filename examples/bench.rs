@@ -1,9 +1,9 @@
 extern crate parking_lot;
 extern crate web3;
 
-use std::{thread, time};
-use std::sync::{atomic, Arc};
 use parking_lot::Mutex;
+use std::sync::{atomic, Arc};
+use std::{thread, time};
 use web3::futures::Future;
 
 fn as_millis(dur: time::Duration) -> u64 {
@@ -71,8 +71,12 @@ fn main() {
     bench(" ipc", eloop, http, requests);
 }
 
-fn bench<T: web3::Transport>(id: &str, eloop: web3::transports::EventLoopHandle, transport: T, max: usize)
-where
+fn bench<T: web3::Transport>(
+    id: &str,
+    eloop: web3::transports::EventLoopHandle,
+    transport: T,
+    max: usize,
+) where
     T::Out: Send + 'static,
 {
     let web3 = web3::Web3::new(transport);

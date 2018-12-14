@@ -1,8 +1,8 @@
 //! Contract deployment utilities
 
-use std::time;
 use ethabi;
 use futures::{Async, Future, Poll};
+use std::time;
 
 use api::{Eth, Namespace};
 use confirm;
@@ -43,7 +43,12 @@ impl<T: Transport> Builder<T> {
     }
 
     /// Execute deployment passing code and contructor parameters.
-    pub fn execute<P, V>(self, code: V, params: P, from: Address) -> Result<PendingContract<T>, ethabi::Error>
+    pub fn execute<P, V>(
+        self,
+        code: V,
+        params: P,
+        from: Address,
+    ) -> Result<PendingContract<T>, ethabi::Error>
     where
         P: Tokenize,
         V: Into<Vec<u8>>,
@@ -54,7 +59,12 @@ impl<T: Transport> Builder<T> {
 
         let params = params.into_tokens();
         let data = match (abi.constructor(), params.is_empty()) {
-            (None, false) => return Err(ethabi::ErrorKind::Msg(format!("Constructor is not defined in the ABI.")).into()),
+            (None, false) => {
+                return Err(ethabi::ErrorKind::Msg(format!(
+                    "Constructor is not defined in the ABI."
+                ))
+                .into())
+            }
             (None, true) => code.into(),
             (Some(constructor), _) => constructor.encode_input(code.into(), &params)?,
         };
@@ -111,11 +121,11 @@ impl<T: Transport> Future for PendingContract<T> {
 #[cfg(test)]
 mod tests {
     use api::{self, Namespace};
+    use contract::{Contract, Options};
     use futures::Future;
     use helpers::tests::TestTransport;
     use rpc;
     use types::U256;
-    use contract::{Contract, Options};
 
     #[test]
     fn should_deploy_a_contract() {
@@ -128,12 +138,12 @@ mod tests {
         // BlockFilter
         transport.add_response(rpc::Value::String("0x0".into()));
         // getFilterChanges
-        transport.add_response(rpc::Value::Array(vec![
-            rpc::Value::String("0xd5311584a9867d8e129113e1ec9db342771b94bd4533aeab820a5bcc2c54878f".into()),
-        ]));
-        transport.add_response(rpc::Value::Array(vec![
-            rpc::Value::String("0xd5311584a9867d8e129113e1ec9db342771b94bd4533aeab820a5bcc2c548790".into()),
-        ]));
+        transport.add_response(rpc::Value::Array(vec![rpc::Value::String(
+            "0xd5311584a9867d8e129113e1ec9db342771b94bd4533aeab820a5bcc2c54878f".into(),
+        )]));
+        transport.add_response(rpc::Value::Array(vec![rpc::Value::String(
+            "0xd5311584a9867d8e129113e1ec9db342771b94bd4533aeab820a5bcc2c548790".into(),
+        )]));
         // receipt
         let receipt = ::serde_json::from_str::<rpc::Value>(
         "{\"blockHash\":\"0xd5311584a9867d8e129113e1ec9db342771b94bd4533aeab820a5bcc2c54878f\",\"blockNumber\":\"0x256\",\"contractAddress\":\"0x600515dfe465f600f0c9793fa27cd2794f3ec0e1\",\"cumulativeGasUsed\":\"0xe57e0\",\"gasUsed\":\"0xe57e0\",\"logs\":[],\"logsBloom\":\"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\",\"root\":null,\"transactionHash\":\"0x70ae45a5067fdf3356aa615ca08d925a38c7ff21b486a61e79d5af3969ebc1a1\",\"transactionIndex\":\"0x0\"}"
@@ -148,13 +158,12 @@ mod tests {
             let builder = Contract::deploy(
                 api::Eth::new(&transport),
                 include_bytes!("./res/token.json"),
-            ).unwrap();
+            )
+            .unwrap();
 
             // when
             builder
-                .options(Options::with(|opt| {
-                    opt.value = Some(5.into())
-                }))
+                .options(Options::with(|opt| opt.value = Some(5.into())))
                 .confirmations(1)
                 .execute(
                     vec![1, 2, 3, 4],
@@ -180,16 +189,12 @@ mod tests {
         transport.assert_request("eth_getFilterChanges", &["\"0x0\"".into()]);
         transport.assert_request(
             "eth_getTransactionReceipt",
-            &[
-                "\"0x70ae45a5067fdf3356aa615ca08d925a38c7ff21b486a61e79d5af3969ebc1a1\"".into(),
-            ],
+            &["\"0x70ae45a5067fdf3356aa615ca08d925a38c7ff21b486a61e79d5af3969ebc1a1\"".into()],
         );
         transport.assert_request("eth_blockNumber", &[]);
         transport.assert_request(
             "eth_getTransactionReceipt",
-            &[
-                "\"0x70ae45a5067fdf3356aa615ca08d925a38c7ff21b486a61e79d5af3969ebc1a1\"".into(),
-            ],
+            &["\"0x70ae45a5067fdf3356aa615ca08d925a38c7ff21b486a61e79d5af3969ebc1a1\"".into()],
         );
         transport.assert_no_more_requests();
     }
